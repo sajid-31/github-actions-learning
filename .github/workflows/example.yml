@@ -1,4 +1,4 @@
-
+name: Release
 
 on:
   pull_request: 
@@ -14,6 +14,16 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3
+
+      - name: Get labels
+        uses: SamirMarin/get-labels-action@v1.0.0
+        id: get_labels
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          label_key: get_labels
+          label_value_order: "patch,minor,major,ignore"
+          default_label_value: patch
+
       - name: Bump version and push tag
         uses: mathieudutour/github-tag-action@v6.1
         id: tag_version
