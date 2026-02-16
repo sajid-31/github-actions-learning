@@ -1,0 +1,38 @@
+
+
+on:
+  pull_request: 
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Bump version and push tag
+        uses: mathieudutour/github-tag-action@v6.1
+        id: tag_version
+        with:
+          default_bump: patch
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dry_run: ${{ github.event_name == 'pull_request' }}
+          tag_prefix: v
+      - name: Comment on PR
+        if: ${{ github.event_name == 'pull_request' && steps.tag_version.outputs.new_tag != '' }}
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            **Next Release**  ${{steps.tag_version.outputs.new_tag }}
+      - name: Create a Github Release
+        uses: ncipollo/release-action@v1
+        if: ${{ github.event_name != 'pull_request' && steps.tag_version.outputs.new_tag != '' }}
+        with:
+          tag: ${{ steps.tag_version.outputs.new_tag }}
+          name: Release ${{ steps.tag_version.outputs.new_tag }}
+          body: ${{ steps.tag_version.outputs.changelog }}
